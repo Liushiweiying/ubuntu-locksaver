@@ -17,6 +17,14 @@ namespace UbuntuLockSaver
         [DllImport("user32.dll")]
         internal static extern bool IsWindow(IntPtr hWnd);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool SystemParametersInfo(uint action, uint param, IntPtr value, uint flags);
+
+        internal const uint SPI_SETSCREENSAVETIMEOUT = 0x000F;
+        internal const uint SPI_SETSCREENSAVEACTIVE = 0x0011;
+        internal const uint SPIF_UPDATEINIFILE = 0x01;
+        internal const uint SPIF_SENDCHANGE = 0x02;
+
         [StructLayout(LayoutKind.Sequential)]
         internal struct RECT
         {

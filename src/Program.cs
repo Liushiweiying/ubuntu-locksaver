@@ -16,6 +16,18 @@ namespace UbuntuLockSaver
             string argument = args.Length > 0 ? args[0].Trim() : "/c";
             string lower = argument.ToLowerInvariant();
 
+            if (lower == "/install" || lower == "-install" || lower == "install")
+            {
+                Installer.Install();
+                return;
+            }
+
+            if (lower == "/uninstall" || lower == "-uninstall" || lower == "uninstall")
+            {
+                Installer.Uninstall();
+                return;
+            }
+
             if (lower.StartsWith("/p"))
             {
                 IntPtr previewHandle = ParseHandle(argument, args);
