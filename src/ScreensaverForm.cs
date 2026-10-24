@@ -31,6 +31,11 @@ namespace UbuntuLockSaver
             TopMost = true;
         }
 
+        public bool IsMenuVisible
+        {
+            get { return menu.IsVisible; }
+        }
+
         public double Fade
         {
             set
@@ -51,7 +56,7 @@ namespace UbuntuLockSaver
         {
             renderer.Draw(e.Graphics, DateTime.Now);
 
-            if (menu.IsOpen)
+            if (menu.IsVisible)
             {
                 menu.Draw(e.Graphics, animation.Elapsed);
             }
@@ -61,9 +66,9 @@ namespace UbuntuLockSaver
         {
             base.OnKeyDown(e);
 
-            if (menu.IsOpen)
+            if (menu.IsVisible)
             {
-                if (e.KeyCode == Keys.Escape)
+                if (menu.IsOpen && e.KeyCode == Keys.Escape)
                 {
                     CloseMenu();
                 }
@@ -80,6 +85,7 @@ namespace UbuntuLockSaver
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
+            Diagnostics.Write("MouseDown " + e.X + "," + e.Y + " open=" + menu.IsOpen + " visible=" + menu.IsVisible + " inIcons=" + renderer.StatusIconArea.Contains(e.Location));
 
             if (menu.IsOpen)
             {
@@ -93,6 +99,11 @@ namespace UbuntuLockSaver
                 }
 
                 Invalidate();
+                return;
+            }
+
+            if (menu.IsVisible)
+            {
                 return;
             }
 
@@ -144,6 +155,7 @@ namespace UbuntuLockSaver
                 return;
             }
 
+            Diagnostics.Write("Menu open");
             menu.Open();
             session.ShowCursor();
             Invalidate();
@@ -156,6 +168,7 @@ namespace UbuntuLockSaver
                 return;
             }
 
+            Diagnostics.Write("Menu close");
             menu.Close();
             session.HideCursor();
             Invalidate();

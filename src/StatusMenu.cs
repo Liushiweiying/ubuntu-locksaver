@@ -8,6 +8,7 @@ namespace UbuntuLockSaver
     internal sealed class StatusMenu
     {
         private const double OpenSeconds = 0.18;
+        private const double CloseSeconds = 0.14;
         private const float ShadowAlpha = 46f;
 
         private sealed class ToggleItem
@@ -42,7 +43,9 @@ namespace UbuntuLockSaver
         private Rectangle panel;
         private Rectangle iconArea;
         private bool open;
+        private bool closing;
         private double openedAt;
+        private double closedAt;
         private bool lightPanel;
         private Color textColor;
         private Color mutedColor;
@@ -105,6 +108,11 @@ namespace UbuntuLockSaver
             get { return open; }
         }
 
+        public bool IsVisible
+        {
+            get { return open || closing; }
+        }
+
         public void Open()
         {
             if (open)
@@ -113,6 +121,7 @@ namespace UbuntuLockSaver
             }
 
             open = true;
+            closing = false;
             openedAt = state.Elapsed;
             dragSlider = null;
             hoverToggle = null;
@@ -122,7 +131,14 @@ namespace UbuntuLockSaver
 
         public void Close()
         {
+            if (!open)
+            {
+                return;
+            }
+
             open = false;
+            closing = true;
+            closedAt = state.Elapsed;
             dragSlider = null;
             hoverToggle = null;
         }
@@ -196,24 +212,44 @@ namespace UbuntuLockSaver
 
         public void Draw(Graphics g, double elapsed)
         {
-            if (!open)
+            if (!open && !closing)
             {
                 return;
             }
 
-            double progress = (elapsed - openedAt) / OpenSeconds;
-            if (progress < 0)
-            {
-                progress = 0;
-            }
-            else if (progress > 1)
-            {
-                progress = 1;
-            }
+            float eased;
+            float offset;
+            float alpha;
 
-            float eased = (float)(1.0 - Math.Pow(1.0 - progress, 3.0));
-            float offset = (1f - eased) * (float)(screen.Height * 0.007);
-            float alpha = eased;
+            if (open)
+            {
+                double progress = (elapsed - openedAt) / OpenSeconds;
+                if (progress < 0)
+                {
+                    progress = 0;
+                }
+                else if (progress > 1)
+                {
+                    progress = 1;
+                }
+
+                eased = (float)(1.0 - Math.Pow(1.0 - progress, 3.0));
+                offset = (1f - eased) * (float)(screen.Height * 0.007);
+                alpha = eased;
+            }
+            else
+            {
+                double progress = (elapsed - closedAt) / CloseSeconds;
+                if (progress >= 1)
+                {
+                    closing = false;
+                    return;
+                }
+
+                eased = (float)(progress * progress);
+                offset = -eased * (float)(screen.Height * 0.004);
+                alpha = 1f - eased;
+            }
 
             GraphicsState saved = g.Save();
             g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;

@@ -55,6 +55,7 @@ namespace UbuntuLockSaver
                 return;
             }
 
+            Diagnostics.Write("RequestClose");
             closing = true;
             closeAt = state.Elapsed;
             closeFrom = state.FadeInValue;
@@ -130,7 +131,17 @@ namespace UbuntuLockSaver
                 opacity = state.FadeInValue;
             }
 
-            bool animateContent = !closing && opacity >= 0.999 && state.Elapsed - lastPaint >= 0.033;
+            double frameInterval = 0.033;
+            for (int i = 0; i < forms.Count; i++)
+            {
+                if (forms[i].IsMenuVisible)
+                {
+                    frameInterval = 0.016;
+                    break;
+                }
+            }
+
+            bool animateContent = !closing && opacity >= 0.999 && state.Elapsed - lastPaint >= frameInterval;
             foreach (ScreensaverForm form in forms)
             {
                 form.Fade = opacity;
