@@ -90,8 +90,10 @@ namespace UbuntuLockSaver
             float sourceX = (backdrop.Width - sourceWidth) / 2f;
             float sourceY = (backdrop.Height - sourceHeight) / 2f;
 
-            InterpolationMode previous = g.InterpolationMode;
+            InterpolationMode previousMode = g.InterpolationMode;
+            CompositingMode previousComposite = g.CompositingMode;
             g.InterpolationMode = InterpolationMode.Bilinear;
+            g.CompositingMode = CompositingMode.SourceCopy;
             g.DrawImage(
                 backdrop,
                 new Rectangle(0, 0, bounds.Width, bounds.Height),
@@ -100,7 +102,8 @@ namespace UbuntuLockSaver
                 sourceWidth,
                 sourceHeight,
                 GraphicsUnit.Pixel);
-            g.InterpolationMode = previous;
+            g.CompositingMode = previousComposite;
+            g.InterpolationMode = previousMode;
         }
 
         private void DrawClock(Graphics g, DateTime now)

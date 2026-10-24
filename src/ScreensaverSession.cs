@@ -15,6 +15,7 @@ namespace UbuntuLockSaver
         private bool closing;
         private double closeAt;
         private double closeFrom;
+        private double lastPaint;
         private Point initialCursor;
 
         private ScreensaverSession()
@@ -120,10 +121,19 @@ namespace UbuntuLockSaver
                 }
             }
 
+            bool animateContent = !closing && opacity >= 0.999 && state.Elapsed - lastPaint >= 0.033;
             foreach (ScreensaverForm form in forms)
             {
                 form.Fade = opacity;
-                form.Invalidate();
+                if (animateContent)
+                {
+                    form.Invalidate();
+                }
+            }
+
+            if (animateContent)
+            {
+                lastPaint = state.Elapsed;
             }
         }
 
