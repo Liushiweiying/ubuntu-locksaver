@@ -15,6 +15,7 @@ namespace UbuntuLockSaver
         private static readonly object FontLock = new object();
         private static bool fontFamiliesResolved;
         private static string clockFamily;
+        private static string uiFamily;
         private static string iconFamily;
 
         private readonly Bitmap backdrop;
@@ -56,6 +57,47 @@ namespace UbuntuLockSaver
             dateFont = new Font(clockFamily, Math.Max(8f, clockSize * 0.22f), FontStyle.Regular, GraphicsUnit.Pixel);
             promptFont = new Font(clockFamily, Math.Max(9f, (float)(bounds.Height * 0.018)), FontStyle.Regular, GraphicsUnit.Pixel);
             iconFont = new Font(iconFamily, Math.Max(9f, (float)(bounds.Height * 0.024)), FontStyle.Regular, GraphicsUnit.Pixel);
+        }
+
+        internal Bitmap Backdrop
+        {
+            get { return backdrop; }
+        }
+
+        internal Rectangle ScreenBounds
+        {
+            get { return bounds; }
+        }
+
+        internal Rectangle StatusIconArea
+        {
+            get
+            {
+                float size = iconFont.Size;
+                int width = (int)(size * 6.4f);
+                int height = (int)(size * 1.8f);
+                int right = bounds.Right - (int)(bounds.Height * 0.03);
+                int top = (int)(bounds.Height * 0.03);
+                return new Rectangle(right - width, top, width, height);
+            }
+        }
+
+        internal static string UiFontFamily
+        {
+            get
+            {
+                EnsureFontFamilies();
+                return uiFamily;
+            }
+        }
+
+        internal static string IconFontFamily
+        {
+            get
+            {
+                EnsureFontFamilies();
+                return iconFamily;
+            }
         }
 
         public void Draw(Graphics g, DateTime now)
@@ -177,12 +219,8 @@ namespace UbuntuLockSaver
 
         private void DrawStatusIcons(Graphics g)
         {
-            float size = iconFont.Size;
-            RectangleF rect = new RectangleF(
-                (float)(bounds.Height * 0.03),
-                (float)(bounds.Height * 0.03),
-                bounds.Width - (float)(bounds.Height * 0.06),
-                size * 1.8f);
+            Rectangle area = StatusIconArea;
+            RectangleF rect = new RectangleF(area.X, area.Y, area.Width, area.Height);
             DrawShadowedText(g, "\uE701   \uE767   \uE7E8", iconFont, rect, RightAligned, 0.78f, 1f);
         }
 
@@ -244,6 +282,10 @@ namespace UbuntuLockSaver
                         collection,
                         new string[] { "Segoe UI Variable Display Light", "Segoe UI Variable Display", "Segoe UI Light", "Segoe UI" },
                         "Arial");
+                    uiFamily = PickFamily(
+                        collection,
+                        new string[] { "Segoe UI Variable Text", "Segoe UI" },
+                        clockFamily);
                     iconFamily = PickFamily(
                         collection,
                         new string[] { "Segoe Fluent Icons", "Segoe MDL2 Assets" },

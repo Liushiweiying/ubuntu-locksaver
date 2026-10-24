@@ -16,7 +16,7 @@ namespace UbuntuLockSaver
         private double closeAt;
         private double closeFrom;
         private double lastPaint;
-        private Point initialCursor;
+        private bool cursorVisible = true;
 
         private ScreensaverSession()
         {
@@ -28,6 +28,24 @@ namespace UbuntuLockSaver
             ScreensaverSession session = new ScreensaverSession();
             session.Start();
             Application.Run(session.context);
+        }
+
+        public void ShowCursor()
+        {
+            if (!cursorVisible)
+            {
+                Cursor.Show();
+                cursorVisible = true;
+            }
+        }
+
+        public void HideCursor()
+        {
+            if (cursorVisible)
+            {
+                Cursor.Hide();
+                cursorVisible = false;
+            }
         }
 
         public void RequestClose()
@@ -46,8 +64,9 @@ namespace UbuntuLockSaver
         private void Start()
         {
             Diagnostics.Write("Session start");
+            cursorVisible = true;
             Cursor.Hide();
-            initialCursor = Cursor.Position;
+            cursorVisible = false;
 
             try
             {
@@ -109,16 +128,6 @@ namespace UbuntuLockSaver
             else
             {
                 opacity = state.FadeInValue;
-
-                if (state.Elapsed > 0.5)
-                {
-                    Point current = Cursor.Position;
-                    if (Math.Abs(current.X - initialCursor.X) > 8 || Math.Abs(current.Y - initialCursor.Y) > 8)
-                    {
-                        RequestClose();
-                        opacity = state.FadeInValue;
-                    }
-                }
             }
 
             bool animateContent = !closing && opacity >= 0.999 && state.Elapsed - lastPaint >= 0.033;
@@ -162,7 +171,11 @@ namespace UbuntuLockSaver
             }
 
             backdrops.Clear();
-            Cursor.Show();
+            if (!cursorVisible)
+            {
+                Cursor.Show();
+                cursorVisible = true;
+            }
         }
     }
 }

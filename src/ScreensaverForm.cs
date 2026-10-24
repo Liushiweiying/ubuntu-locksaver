@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -9,13 +8,15 @@ namespace UbuntuLockSaver
     {
         private readonly Renderer renderer;
         private readonly ScreensaverSession session;
-        private readonly Stopwatch shownFor = Stopwatch.StartNew();
-        private readonly Point initialCursor;
+        private readonly AnimationState animation;
+        private readonly StatusMenu menu;
 
         public ScreensaverForm(Screen screen, Bitmap backdrop, AnimationState state, ScreensaverSession session)
         {
             this.session = session;
+            this.animation = state;
             renderer = new Renderer(backdrop, screen.Bounds, state, false);
+            menu = new StatusMenu(screen.Bounds, state, renderer);
 
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.Black;
@@ -28,8 +29,6 @@ namespace UbuntuLockSaver
             StartPosition = FormStartPosition.Manual;
             Text = "Ubuntu Lock Saver";
             TopMost = true;
-
-            initialCursor = Cursor.Position;
         }
 
         public double Fade
@@ -51,11 +50,29 @@ namespace UbuntuLockSaver
         protected override void OnPaint(PaintEventArgs e)
         {
             renderer.Draw(e.Graphics, DateTime.Now);
+
+            if (menu.IsOpen)
+            {
+                menu.Draw(e.Graphics, animation.Elapsed);
+            }
         }
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
+
+            if (menu.IsOpen)
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    CloseMenu();
+                }
+
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                return;
+            }
+
             session.RequestClose();
             e.Handled = true;
         }
@@ -63,28 +80,85 @@ namespace UbuntuLockSaver
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
+
+            if (menu.IsOpen)
+            {
+                if (menu.PanelContains(e.Location))
+                {
+                    menu.MouseDown(e.Location);
+                }
+                else
+                {
+                    CloseMenu();
+                }
+
+                Invalidate();
+                return;
+            }
+
+            if (renderer.StatusIconArea.Contains(e.Location))
+            {
+                OpenMenu();
+                return;
+            }
+
             session.RequestClose();
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            if (shownFor.ElapsedMilliseconds < 500)
+
+            if (!menu.IsOpen)
             {
                 return;
             }
 
-            Point current = Cursor.Position;
-            if (Math.Abs(current.X - initialCursor.X) > 8 || Math.Abs(current.Y - initialCursor.Y) > 8)
-            {
-                session.RequestClose();
-            }
+            menu.MouseMove(e.Location);
+            Invalidate();
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            menu.MouseUp();
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
+            if (menu.IsOpen)
+            {
+                menu.Close();
+                session.HideCursor();
+            }
+
+            menu.Dispose();
             renderer.Dispose();
             base.OnFormClosed(e);
+        }
+
+        private void OpenMenu()
+        {
+            if (menu.IsOpen)
+            {
+                return;
+            }
+
+            menu.Open();
+            session.ShowCursor();
+            Invalidate();
+        }
+
+        private void CloseMenu()
+        {
+            if (!menu.IsOpen)
+            {
+                return;
+            }
+
+            menu.Close();
+            session.HideCursor();
+            Invalidate();
         }
     }
 }
